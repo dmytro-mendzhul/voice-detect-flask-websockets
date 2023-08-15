@@ -3,7 +3,6 @@ import asyncio
 import aiohttp
 import websockets
 from websockets.server import serve
-from datetime import datetime
 
 
 async def redirect(websocket: websockets.WebSocketServerProtocol):
@@ -12,11 +11,24 @@ async def redirect(websocket: websockets.WebSocketServerProtocol):
         if not account_code:
             await websocket.close()
             return
-
+        
         target_port = choose_target_port(account_code)
         target_url = f"http://{target_host}:{target_port}"
-        await send_http_request(account_code, binary_data, target_url)
+        try:
+            await send_http_request(account_code, binary_data, target_url)
+        except Exception as e:
+            print(f"Error resending to {target_url}: {e}")
+        
         await websocket.send("OK")
+
+            
+
+async def close_connection(websocket):
+    try:
+        await websocket.close()
+        print("connection closed")
+    except Exception as e:
+        print(f"exception om websocket.close(): {e}")
 
 
 async def send_http_request(account_code, binary_data, url):

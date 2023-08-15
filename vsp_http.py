@@ -7,15 +7,20 @@ app = Flask(__name__)
 
 
 @app.route("/", methods=["POST"])
-def receive_post_request():
+async def receive_post_request():
     receive_time = datetime.utcnow()
     try:
         account_code = request.headers.get(accountcode_name)
         binary_data = request.data
         print(f"Received {len(binary_data)} bytes from {account_code}")
 
-        speech_prob = voice_detect_model.voice_prob(binary_data)
-        voice = 1 if speech_prob > 0.5 else 0
+        speech_prob = await voice_detect_model.voice_prob(binary_data)
+        voice = None
+        if speech_prob is None:
+            print("Voice detection failed.")
+        else:
+            voice = 1 if speech_prob > 0.5 else 0
+        
         processed_time = datetime.utcnow()
         processing_time_mcs = (processed_time - receive_time).microseconds
         processing_time_ms = int(round(processing_time_mcs / 1000, 0))
@@ -31,7 +36,7 @@ def receive_post_request():
         return "OK"
 
     except Exception as e:
-        print(f"Error processing request: {e}")
+        print(f"Error processing request: {e}\n\n\n")
         return "Error processing request."
 
 
@@ -63,7 +68,7 @@ def get_config():
 
 
 if __name__ == "__main__":
-    voice_detect_model = VoiceDetect(num_threads=1)
+    voice_detect_model = VoiceDetect(num_threads=1, use_onnx=True)
     config = get_config()
     host: str = config["host"]
     port: str = config["port"]

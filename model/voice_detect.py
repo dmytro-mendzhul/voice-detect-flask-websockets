@@ -1,5 +1,6 @@
 SAMPLING_RATE = 8000  # Defined in test task
 USE_ONNX = False  # TODO check
+import asyncio
 import io
 import torch
 import torchaudio
@@ -46,6 +47,21 @@ class VoiceDetect:
         assert sr == sampling_rate
         return wav.squeeze(0)
 
-    def voice_prob(self, binary: bytes, sampling_rate: int = SAMPLING_RATE):
-        wav = self.bytes_to_wav(binary, sampling_rate)
-        return self.model(wav, sampling_rate).item()
+    async def voice_prob(self, binary: bytes, sampling_rate: int = SAMPLING_RATE, attempt: int = 0):
+        try:
+            wav = self.bytes_to_wav(binary, sampling_rate)
+            print(f"wav readed. len={len(wav)}")
+            prob = self.model(wav, sampling_rate).item()
+            print(f"prob={prob}")
+            if attempt > 0:
+                print (f"attempt {attempt} success")
+            return prob
+        except Exception as e:
+            print (f"Voice attempt {attempt} failed")
+            if attempt > 2:
+                return None
+            else:
+                print(e)
+            await asyncio.sleep(1 / 1000)
+            print (f"retrying...")
+            return await self.voice_prob(binary, sampling_rate, attempt+1)

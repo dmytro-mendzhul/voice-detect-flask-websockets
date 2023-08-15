@@ -3,7 +3,6 @@ import asyncio
 from datetime import datetime
 import os
 import random
-import time
 import websockets
 
 
@@ -14,6 +13,7 @@ async def send_wav_chunks(
     async with websockets.connect(url) as websocket:
         for filename in os.listdir(chunks_directory):
             if filename.endswith(".wav"):
+                print(f"sending {filename}")
                 full_path = os.path.join(chunks_directory, filename)
                 with open(full_path, "rb") as wav_file:
                     wav_data = wav_file.read()
@@ -27,10 +27,25 @@ async def send_wav_chunks(
                 print(
                     f"Sent {filename} to server {url} {accountcode_name}={accountcode}"
                 )
-                time.sleep(5 / 1000)
-
-        await websocket.send("CLOSE")
+                resp = await websocket.recv()
+                if resp != "OK":
+                    print(f"closing connection due to response: {resp}")
+                    await close_connection(websocket)
+                    break
+                await asyncio.sleep(5 / 1000)
+        
+        await close_connection(websocket)
         print("Done")
+
+
+async def close_connection(websocket):
+    try:
+        await websocket.close()
+        print("connection closed")
+    except Exception as e:
+        print(f"exception om websocket.close(): {e}")
+    finally:
+        print(f"closed")
 
 
 def get_config():
