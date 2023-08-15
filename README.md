@@ -4,6 +4,8 @@
 
 This is simple a proof-of-concept project made as a test task.
 
+It uses [Silero VAD](https://github.com/snakers4/silero-vad) model - pre-trained enterprise-grade [Voice Activity Detector](https://en.wikipedia.org/wiki/Voice_activity_detection) by [snakers4](https://github.com/snakers4).
+
 Scripts in order of running:
 
 1. `split.py` - splits WAV files at `data` directory into 100ms frames and saves into corresponding folders. Could be run by `split.bat`.
